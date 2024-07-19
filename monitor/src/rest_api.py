@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Request, Response
 from fastapi.responses import FileResponse
 from fastapi_utils.tasks import repeat_every
-from typing import Any, MutableMapping, Dict, Optional
+from typing import Any, MutableMapping, Dict
 from framework import framework
 from util import load_config, remove_path_and_extension
 from cert_status_logic import is_valid_cert_file
@@ -303,7 +303,6 @@ async def ocsp(request: Request) -> Response:
     if data is not None:
         return Response(content=data, media_type="application/ocsp-response")
     else:
-        #return None
         return Response(content=None, media_type="application/ocsp-response")
 
 
@@ -340,10 +339,12 @@ def setup_blockchain():
     """ Sets up accounts and credit for on blockchain ready for demonstration.
         This functionality is now supplied by Satoshi-labs.
     """
-    return{
+    return {
         "result": "failed",
         "reason": "Not supported"
     }
+
+
 '''
 @app.post("/setup_blockchain", tags=["Admin"])
 def setup_blockchain():

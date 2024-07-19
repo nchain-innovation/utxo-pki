@@ -1,6 +1,5 @@
 import logging
 from typing import Dict, List
-from io import BytesIO
 import requests
 from fastapi import UploadFile
 
@@ -135,9 +134,6 @@ class UTXOSet:
             return {}
 
 
-
-
-       
 # Given a transaction, broadcast it to the network
 def broadcast_tx(utxo: UTXOSet, tx: Tx) -> bool:
 
@@ -160,7 +156,7 @@ def broadcast_tx(utxo: UTXOSet, tx: Tx) -> bool:
         raise RuntimeError("broadcast_tx failed")
 
 
-# Calculate the actual fee: 
+# Calculate the actual fee:
 #  - this needs includes the 1000 sats for the certificate
 #  - the fee estimate for the payload
 #  - a default fee I'm calling "Murphy's fudge factor" (as sometime our transactions were not getting mined)
@@ -173,7 +169,6 @@ def calculate_fee(payload_length: int, utxo: UTXOSet) -> int:
 
     adjusted_estimate = utxo_set.get_certificate_tx_amount() + fee_estimate + utxo.get_default_p2pkh_fee()
     print(f'adjusted_estimate -> {adjusted_estimate}')
-    
     return adjusted_estimate
 
 
@@ -191,12 +186,11 @@ def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_s
 
     json_payload = json.dumps(payload)
 
-
     # calculate the fee for the certificate transaction
     fee = calculate_fee(len(json_payload.encode()), utxo)
 
     # Create a locking script for the funding transaction
-    funding_locking_script = p2pkh_script(address_to_public_key_hash(utxo.get_funding_public_addr())) 
+    funding_locking_script = p2pkh_script(address_to_public_key_hash(utxo.get_funding_public_addr()))
     # print(funding_locking_script.print_script())
 
     # Create a locking script for the certificate transaction
@@ -209,7 +203,6 @@ def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_s
     spendable_outpoints_tx = fund_transaction(finance_srv, fee, funding_locking_script)
     # print(f'spendable_outpoints -> {spendable_outpoints}')
 
-
     # create the certificate transaction outpoints
     vouts = []
     vouts.append(TxOut(amount=utxo.get_certificate_tx_amount(), script_pubkey=certificate_locking_script.get_commands()))
@@ -218,15 +211,14 @@ def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_s
     # create the certificate transaction inputs
     vins = []
     for outs in spendable_outpoints_tx["outpoints"]:
-        vins.append(TxIn(prev_tx=outs["hash"],prev_index=outs["index"]))
+        vins.append(TxIn(prev_tx=outs["hash"], prev_index=outs["index"]))
     print(f"vins = {vins}")
-    
-    input_tx: Tx  = Tx.parse(bytes.fromhex(spendable_outpoints_tx["tx"]))
+
+    input_tx: Tx = Tx.parse(bytes.fromhex(spendable_outpoints_tx["tx"]))
     tx = Tx(version=1,
             tx_ins=vins,
             tx_outs=vouts,
             locktime=0)
-
 
     # sign it
     # key info
@@ -250,7 +242,6 @@ def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_s
     utxo_set.update_unspents(utxo.get_utxo_client())
 
 
-
 def spend_certificate_transaction(tx_id: str, tx_index: int, cert_key: int, utxo: UTXOSet, finance_srv: str) -> bool:
     """ Given an input tx & index, create a tx that spends the utxo (funded by the funding wallet)
         The transaction caches are updated to reflect certificates being revoked
@@ -267,7 +258,7 @@ def spend_certificate_transaction(tx_id: str, tx_index: int, cert_key: int, utxo
 
     # basic check that the scriptPubKey has an entry
     assert tx_unspent["scriptPubKey"] is not None
-    print(f'Tx verified in the UTXO set')
+    print('Tx verified in the UTXO set')
 
     # calculate the fee for the revocation transaction
     fee = utxo.get_default_p2pkh_fee()
@@ -289,45 +280,31 @@ def spend_certificate_transaction(tx_id: str, tx_index: int, cert_key: int, utxo
     vins = []
     # append the certificate outpoint
 
-    vins.append(TxIn(prev_tx=tx_id, prev_index=tx_index,script=b'',sequence=0xFFFFFFFF))
+    vins.append(TxIn(prev_tx=tx_id, prev_index=tx_index, script=b'', sequence=0xFFFFFFFF))
     # append the spendable outpoints from funding service
-    for outpoint in spendable_outpoints["outpoints"]:    
-        vins.append(TxIn(prev_tx=outpoint["hash"],prev_index=outpoint["index"],script=b'',sequence=0xFFFFFFFF))
-    
-    print(f"vins = {vins}")
- 
+    for outpoint in spendable_outpoints["outpoints"]:
+        vins.append(TxIn(prev_tx=outpoint["hash"], prev_index=outpoint["index"], script=b'', sequence=0xFFFFFFFF))
+
     tx = Tx(version=1,
             tx_ins=vins,
             tx_outs=vouts,
             locktime=0)
 
-    """sign it
-        input 0 with the certificate key
-    """
-
     funding_input_tx: Tx = Tx.parse(bytes.fromhex(spendable_outpoints["tx"]))
 
     signed_tx: Tx = utxo.certificate_key.sign_tx(0, tx_unspent["tx"], tx)
-    
-    #if not sign_input_bsv(tx, 0, utxo.certificate_key):
-    #    raise ValueError("Failed to sign & verify signature for the certifcate input tx")
 
     tmp_tx = signed_tx
     for i in range(1, len(tx.tx_ins)):
-        #retval = sign_input_bsv(tx, i, utxo.funding_key)
-        signed_tx_tmp : Tx = utxo.funding_key.sign_tx(i,funding_input_tx, tmp_tx)
+        signed_tx_tmp: Tx = utxo.funding_key.sign_tx(i, funding_input_tx, tmp_tx)
         tmp_tx = signed_tx_tmp
 
     # send it
-    print(tmp_tx.serialize().hex())
     broadcast_tx(utxo, tmp_tx)
-
     # remove the info from the cache
     tx_cache.revoke_cert_tx(cert_key, tmp_tx.id())
     # update the utxo set
     utxo_set.update_unspents(utxo_set.get_utxo_client())
-
-
 
 
 def validate_certificate_tx(cert_serial_number: int, utxo_set: UTXOSet) -> bool:
@@ -345,17 +322,17 @@ def validate_certificate_tx(cert_serial_number: int, utxo_set: UTXOSet) -> bool:
     # we could add a second check to ensure the tx is valid also
     tx_out_dict = utxo_set.get_tx_out_point(issued_tx.cert_txid, issued_tx.cert_txindex)
     assert tx_out_dict['scriptPubKey'] is not None
-    # raw_script = bytes.fromhex(tx_out_dict["scriptPubKey"])
-    # the lenght of the script is not included in the UTXO return
-    # total_script = encode_varint(len(raw_script)) + raw_script
 
-    #stream = BytesIO(tx_out_dict['scriptPubKey'])
-    script_pubkey = tx_out_dict['scriptPubKey']
-    cert_encoded = script_pubkey.get_commands()[0]
-    cert_decoded = cert_encoded.decode()
+    script_str: str = tx_out_dict['scriptPubKey'].script_pubkey.to_string()
+    cert_hex: str = None
+    try:
+        target_index = script_str.split().index('OP_DROP')
+        if target_index != 0:
+            cert_hex = script_str.split()[target_index - 1]
+    except ValueError as e:
+        raise RuntimeError(e.what())
 
-    cert_info = json.loads(cert_decoded)
-
+    cert_info = json.loads(bytes.fromhex(cert_hex[2:]).decode())
     assert cert_info["cert_id"] == cert_serial_number
 
     # load the certificate
@@ -369,7 +346,7 @@ def validate_certificate_tx(cert_serial_number: int, utxo_set: UTXOSet) -> bool:
     return True
 
 
-def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_srv : str) -> bool:
+def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_srv: str) -> bool:
     try:
         issued_tx_info = tx_cache.lookup_cert_tx(cert.serial_number)
         print(f'revoke_certificate_impl tx info -> {issued_tx_info} ')
@@ -381,7 +358,7 @@ def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_s
     return True
 
 
-def revoke_certifcate_transaction(file: UploadFile, utxo_set: UTXOSet, finance_srv : str) -> bool:
+def revoke_certifcate_transaction(file: UploadFile, utxo_set: UTXOSet, finance_srv: str) -> bool:
     """ Given a certificate UpLoadFile, spend the UTXO output returning the amount to the
         funding wallet
     """
@@ -395,13 +372,7 @@ def get_cert_from_utxo(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Certi
     """
     issued_tx_info = tx_cache.lookup_cert_tx(cert_serial_number)
     tx_out_dict = utxo_set.get_tx_out_point(issued_tx_info.cert_txid, issued_tx_info.cert_txindex)
-    # print(tx_out_dict)
     assert tx_out_dict["scriptPubKey"] is not None
-    # raw_script = bytes.fromhex(tx_out_dict["scriptPubKey"])
-    # the lenght of the script is not included in the UTXO return
-    # total_script = encode_varint(len(raw_script)) + raw_script
-
-    #stream = BytesIO(tx_out_dict["scriptPubKey"])
     script_pubkey = tx_out_dict["scriptPubKey"]
 
     script_as_str: str = script_pubkey.to_string()
@@ -411,15 +382,12 @@ def get_cert_from_utxo(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Certi
         target_index = split_script.index('OP_DROP')
         if target_index == 0:
             raise ValueError('OP_DROP IS AT THE BEGINNING OF THE SCRIPT')
-        cert_hex = split_script[target_index-1]
+        cert_hex = split_script[target_index - 1]
     except ValueError as e:
         raise ValueError(e.what())
 
-    print(cert_hex)
     cert_decoded = bytes.fromhex(cert_hex[2:]).decode()
-
     cert_info = json.loads(cert_decoded)
-
     assert cert_info["cert_id"] == cert_serial_number
 
     # load the certificate
@@ -443,12 +411,11 @@ def get_cert_from_raw_tx(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Cer
     issued_tx = tx_cache.lookup_cert_tx(cert_serial_number)
     tx = load_tx(issued_tx.cert_txid, utxo_set)
     script_str: str = tx.tx_outs[issued_tx.cert_txindex].script_pubkey.to_string()
-    split_script = script_str.split()
     cert_hex: str = None
     try:
-        target_index =  script_str.split().index('OP_DROP')
+        target_index = script_str.split().index('OP_DROP')
         if target_index != 0:
-            cert_hex = script_str.split()[target_index-1]
+            cert_hex = script_str.split()[target_index - 1]
     except ValueError as e:
         raise RuntimeError(e.what())
 
@@ -460,12 +427,11 @@ def get_cert_from_raw_tx(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Cer
 def get_cert_from_tx_id(tx_id: str, tx_index: int, utxo_set: UTXOSet) -> x509.Certificate:
     tx = load_tx(tx_id, utxo_set)
     script_str: str = tx.tx_outs[tx_index].script_pubkey.to_string()
-    split_script = script_str.split()
     cert_hex: str = None
     try:
-        target_index =  script_str.split().index('OP_DROP')
+        target_index = script_str.split().index('OP_DROP')
         if target_index != 0:
-            cert_hex = script_str.split()[target_index-1]
+            cert_hex = script_str.split()[target_index - 1]
     except ValueError as e:
         raise RuntimeError(e.what())
 

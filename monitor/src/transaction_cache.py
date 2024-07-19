@@ -150,7 +150,6 @@ class TxCache:
 
     def add_cert_tx(self, key: int, txid: str, tx_index: int) -> None:
         # print(f" add_cert_tx, key={key}, key-hex={hex(key)}, txid={txid}, tx_index={tx_index}")
-        
         # check the current map.
         # if empty, add to the current map only
         # if the key exists then we have a problem

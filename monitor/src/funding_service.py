@@ -1,6 +1,6 @@
 import requests
-import json
 from tx_engine import Script
+
 
 def get_financing_service_status(finance_srv: str) -> bool:
     address = finance_srv["address"]
@@ -16,21 +16,20 @@ def get_financing_service_status(finance_srv: str) -> bool:
         # cycle through the clients looking for "client_id"
         for client in js["clients"]:
             if client["client_id"] == client_id:
-                    print(f'Financing Service found: client -> {client}')
-                    return True
+                print(f'Financing Service found: client -> {client}')
+                return True
         return False
 
     else:
         print(f"Financing Service returned bad status, {res.status_code}")
         return False
-    
 
 
 # get the balance from finance service
 # http://127.0.0.1:8080/balance/id1
 def get_balance(finance_srv: str) -> int:
     address = finance_srv["address"]
-    client_id = finance_srv["client_id"]    
+    client_id = finance_srv["client_id"]
 
     headers = {'content-type': 'application/json'}
     url: str = address + "/balance/" + client_id
@@ -43,19 +42,19 @@ def get_balance(finance_srv: str) -> int:
             print(f'Financing Service: balance -> {balance}')
             return balance
         else:
-            print(f'Error getting balance from finance service')
+            print('Error getting balance from finance service')
             return 0
     else:
         print(f"Financing Service returned bad status, {res.status_code}")
         return 0
-    
-    
+
+
 # /fund/{client_id}/{satoshi}/{no_of_outpoints}/{multiple_tx}/{locking_script}
 # curl -X POST http://127.0.0.1:8080/fund/id1/123/1/false/0000
 # fund transaction from finance service
 def fund_transaction(finance_srv: str, amount: int, locking_script: Script) -> dict:
     address = finance_srv["address"]
-    client_id = finance_srv["client_id"]    
+    client_id = finance_srv["client_id"]
     print("Financing service: fund_transaction")
     print(f'  amount -> {amount}')
     print(f'  locking_script -> {locking_script.to_string()}')
@@ -72,10 +71,9 @@ def fund_transaction(finance_srv: str, amount: int, locking_script: Script) -> d
         if js["status"] == "Success":
             print("Success funding transaction")
             print(js)
-            #return js["outpoints"]
             return js
         else:
-            print(f'Error funding transaction from finance service')
+            print('Error funding transaction from finance service')
             print(f'js -> {js}')
             return {}
     else:
