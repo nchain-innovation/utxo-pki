@@ -1,0 +1,14 @@
+@startuml
+title Certificate Generation
+hide footbox
+
+actor Client as c
+participant CertificateAuthority as ca
+
+c -> c: Create Key
+c -> c: Create CSR\n(Certifcate Signing Request)
+c -> ca: CSR
+ca -> ca: Sign Certificate
+ca -> c: Certificate
+
+@enduml

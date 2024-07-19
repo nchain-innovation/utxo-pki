@@ -1,0 +1,99 @@
+[web_interface]
+address = '127.0.0.1:5003'
+log_level = 'info'
+reload = false
+
+[uaas_interface]
+# the host.docker.internal allows a service running in a container to 
+# communicate with a service running outside the container. 
+address = 'http://uaas_web:5010'
+# Collections to look up in the uaas (for on-chain certificates)
+uaas_collection = "johns"
+
+[bsv_client]
+# For bsv testnet (default)
+type = "testnet"
+interface_type = "woc"
+network_type = "testnet"
+
+# For ms-node
+# type = "insandbox"
+# user = "bitcoin"
+# password = "bitcoin"
+# network_type = "test"
+# address = "node1:18332"
+
+# for SV running locally
+# type = 'sandbox'
+# user = 'bitcoin'
+# password = 'bitcoin'
+# network_type = 'test'
+# address = '127.0.0.1:18332'
+
+
+[certificate_authority]
+ca = "easy-rsa"
+log_file = "/home/root/easy-rsa/pki/index.txt"
+ca_dir = "/home/root/easy-rsa"
+ca_cert = "/home/root/easy-rsa/pki/ca.crt"
+csr_dir = "/home/root/easy-rsa/csr"
+issued_dir = "/home/root/easy-rsa/pki/issued"
+certs_by_serial_no = "/home/root/easy-rsa/pki/certs_by_serial"
+revoked_certs_by_serial_no = "/home/root/easy-rsa/pki/revoked/certs_by_serial"
+
+
+server_cert_template_file = "/home/root/easy-rsa/x509-types/server"
+server_cert_template = """
+# X509 extensions for a server
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+extendedKeyUsage = serverAuth
+keyUsage = digitalSignature,keyEncipherment
+authorityInfoAccess = caIssuers;URI:http://localhost:5003/ca_cert
+authorityInfoAccess = OCSP;URI:http://localhost:5003/ocsp
+"""
+
+ocsp_cert_template_file = "/home/root/easy-rsa/x509-types/ocsp"
+ocsp_cert_template = """
+# X509 extensions for an OCSP Responder
+basicConstraints = critical, CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+extendedKeyUsage = critical, OCSPSigning
+keyUsage = critical, digitalSignature
+noCheck = ignored
+"""
+
+
+# key signing for writing transactions to the chain
+# funding_key pubkey -> n4Z4DvQH2LhoM5UHsk9texQiHj5Rgz6jhD
+# certificate key pubkey -> mzjX58hHfkHLsvTZVpb4m9mVXma9PTxrkH
+[cert_wallets]
+funding_key = "cQgderrMXQn2q6RHQioujBKRrjJRtnkKXXvRrwuBojB5Pj2u9inT"
+certificate_key = "cPyEicHytsXpEWd6yKgwyt9t3Zk1QV169pdvXmizV3S6YAKBwsiv"
+funding_balance = 200000000
+certificate_value = 1000
+default_p2pkh_fee = 500
+
+[ocsp_responder]
+responder_certfile = "/home/root/easy-rsa/pki/issued/OCSP.crt"
+responder_keyfile = "/home/root/easy-rsa/csr/OCSP.key"
+issuer_certfile = "/home/root/easy-rsa/pki/ca.crt"
+
+[ocsp_requester]
+issuer_certfile = "/home/root/easy-rsa/pki/ca.crt"
+certs_by_serial_no = "/home/root/easy-rsa/pki/certs_by_serial"
+ocsp_responder = "http://localhost:5003/ocsp"
+
+#path to create the transaction cache files
+[tx_cache_files]
+path_to_tx_files = "/home/root/easy-rsa/tx_cache_files"
+default_block_browser = "http://localhost:8080"
+
+
+# financing service config
+[financing_service]
+address = 'http://financing_service:8070'
+#address = 'http://localhost:8070'
+client_id = "utxo_pki_financing_wif"

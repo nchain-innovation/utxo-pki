@@ -1,0 +1,21 @@
+@startuml
+title HTTPS Session Setup
+hide footbox
+actor WebBrowser as wb
+participant WebSite as ws
+participant OCSP_Responder as ocsp
+participant Blockchain as bsv
+wb -> ws: setup https session
+ws --> wb: certificate
+wb -> ocsp: ocsp_request(certificate)
+ocsp -> bsv: in_UTXO(certificate)
+bsv --> ocsp: True
+ocsp -> ocsp: sign ocsp_response\n(with OCSP key)
+ocsp --> wb: ocsp_response(certificate)\ncert.GOOD
+...
+group Encrypted traffic
+    wb -> ws: get contents
+    ws --> wb: contents
+end
+
+@enduml

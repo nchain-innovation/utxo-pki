@@ -1,0 +1,37 @@
+@startuml
+title Certificate Overview
+package CertificateAuthority {
+    class CACertificate {
+        subject: address
+        public_key: key
+    }
+    class CAKey
+
+}
+
+package WebSite {
+    class SiteCertificate {
+        subject: address
+        public_key: key
+        ocsp: uri
+
+    }
+    class SiteKey
+}
+
+package OCSP_Responder {
+    class OCSPCertificate
+    class OCSPKey
+}
+
+package WebBrowser {
+    class Session
+}
+
+
+CACertificate --> SiteCertificate: Sign (1)
+CACertificate --> OCSPCertificate: Sign (2)
+
+CACertificate --> WebBrowser: Install (3)
+
+@enduml

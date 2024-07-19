@@ -1,0 +1,15 @@
+toml 
+fastapi
+fastapi_utils
+uvicorn[standard]
+python-multipart
+python-bitcoinrpc
+coincurve 
+bitsv
+flake8
+pytest
+pexpect
+pyopenssl
+typing-inspect
+maturin
+tx-engine

@@ -1,0 +1,8 @@
+[web_interface]
+address = '127.0.0.1:5005'
+log_level = 'info'
+reload = false
+
+# Enable for https
+ssl_keyfile = "/app/src/certs/localhost.key"
+ssl_certfile = "/app/src/certs/localhost.crt"

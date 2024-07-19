@@ -1,0 +1,14 @@
+toml 
+fastapi
+fastapi_utils
+uvicorn[standard]
+docker
+docker-compose
+python-multipart
+python-bitcoinrpc
+coincurve 
+bitsv
+flake8
+pytest
+pexpect
+pyopenssl
