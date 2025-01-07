@@ -1,8 +1,9 @@
 import requests
+from typing import MutableMapping, Any
 from tx_engine import Script
 
 
-def get_financing_service_status(finance_srv: str) -> bool:
+def get_financing_service_status(finance_srv: MutableMapping[str, Any]) -> bool:
     address = finance_srv["address"]
     client_id = finance_srv["client_id"]
 
@@ -27,7 +28,7 @@ def get_financing_service_status(finance_srv: str) -> bool:
 
 # get the balance from finance service
 # http://127.0.0.1:8080/balance/id1
-def get_balance(finance_srv: str) -> int:
+def get_balance(finance_srv: MutableMapping[str, Any]) -> int:
     address = finance_srv["address"]
     client_id = finance_srv["client_id"]
 
@@ -52,7 +53,7 @@ def get_balance(finance_srv: str) -> int:
 # /fund/{client_id}/{satoshi}/{no_of_outpoints}/{multiple_tx}/{locking_script}
 # curl -X POST http://127.0.0.1:8080/fund/id1/123/1/false/0000
 # fund transaction from finance service
-def fund_transaction(finance_srv: str, amount: int, locking_script: Script) -> dict:
+def fund_transaction(finance_srv: MutableMapping[str, Any], amount: int, locking_script: Script) -> dict:
     address = finance_srv["address"]
     client_id = finance_srv["client_id"]
     print("Financing service: fund_transaction")

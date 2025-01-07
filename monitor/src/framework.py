@@ -3,8 +3,7 @@ from typing import Callable, List
 from enum import Enum, auto
 
 
-from tx_engine.interface.blockchain_interface import *
-from tx_engine.interface.interface_factory import *
+from tx_engine.interface.blockchain_interface import BlockchainInterface
 
 from certificate_authority import certificate_authority
 

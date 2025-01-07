@@ -1,5 +1,4 @@
-from tx_engine.interface.blockchain_interface import *
-from tx_engine.interface.interface_factory import *
+from tx_engine.interface.blockchain_interface import BlockchainInterface
 from transaction_cache import tx_cache
 
 

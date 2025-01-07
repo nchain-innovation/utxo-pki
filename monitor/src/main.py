@@ -5,13 +5,11 @@ import uvicorn
 import sys
 import os
 
-sys.path.append('./tx-engine')
 
 from framework import framework, FrameworkEvent
 from cert_logic import on_certificate_status_change
 from block_logic import sv_status
-from tx_engine.interface.blockchain_interface import *
-from tx_engine.interface.interface_factory import *
+from tx_engine.interface.interface_factory import interface_factory
 
 from certificate_authority import certificate_authority
 from ocsp_responder import ocsp_responder

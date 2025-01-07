@@ -1,7 +1,7 @@
 from typing import List
 
-from tx_engine.interface.blockchain_interface import *
-from tx_engine.interface.interface_factory import *
+from tx_engine.interface.blockchain_interface import BlockchainInterface
+
 
 def on_certificate_status_change(certs: List[str], bsv_client: BlockchainInterface):
     """ Code called when the certificate status changes

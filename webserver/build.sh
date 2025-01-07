@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build --tag "webserver" .
+docker build --no-cache --tag "webserver" .

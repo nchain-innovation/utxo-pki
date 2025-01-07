@@ -1,9 +1,32 @@
-from typing import List, Any, MutableMapping, Optional
+from typing import List, Any, MutableMapping, Optional, Union
 from cryptography.x509 import Certificate, load_pem_x509_certificate
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
+from cryptography.hazmat.primitives.asymmetric import (
+    dh, #DHPrivateKey,
+    ed25519, #Ed25519PrivateKey,
+    ed448, #Ed448PrivateKey,
+    rsa, #RSAPrivateKey,
+    dsa, #DSAPrivateKey,
+    ec, #EllipticCurvePrivateKey,
+    x25519, #X25519PrivateKey,
+    x448, #X448PrivateKey,s
+)
+
 import toml
 import os
+
+# Define a type alias for all supported key types
+PrivateKeyTypes = Union[
+    dh.DHPrivateKey,
+    ed25519.Ed25519PrivateKey,
+    ed448.Ed448PrivateKey,
+    rsa.RSAPrivateKey,
+    dsa.DSAPrivateKey,
+    ec.EllipticCurvePrivateKey,
+    x25519.X25519PrivateKey,
+    x448.X448PrivateKey,
+]
 
 
 def load_config(filename="bsv.toml") -> MutableMapping[str, Any]:
@@ -57,7 +80,7 @@ def load_cert_pem_file(fname: str) -> Optional[Certificate]:
         return load_pem_x509_certificate(cert_bytes)
 
 
-def load_key_pem_file(fname: str) -> Optional[Certificate]:
+def load_key_pem_file(fname: str) -> Optional[PrivateKeyTypes]:
     """ Given a filename return contents as a key
     """
     try:
