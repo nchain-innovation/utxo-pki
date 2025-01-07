@@ -4,13 +4,11 @@ This section describes the steps required to setup Firefox browser on MacOS to d
 
 
 <br /><br />
-1) Setup Blockchain account
-* Ensure the ms-node service is running
-* Run the REST api endpoint at localhost:5003/docs
-* Select the admin POST `setup_blockchain` endpoint
-* Press `Try it out`
-* Press `Execute`
-* Check the response, note that you can also check the service logs
+1) Setup Blockchain UTXO balances (this can be mainnet or testnet)
+* Set up a private/public key pair for the funding activity
+* Set up a private/public key pair for the certificate activity
+* Ensure that both have some available satoshi available
+* Please remember to add the private key information to the toml file in monitor/data/monitor.toml
 
 <br /><br />
 2) Setup CA
