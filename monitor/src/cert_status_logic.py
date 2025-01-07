@@ -23,11 +23,11 @@ def is_valid_cert_file(file: UploadFile) -> Dict[str, str]:
         # add sanity checks on the validity of the certificate
         # check in the tx_cache + blockchain for a valid utxo
         if not validate_certificate_tx(cert.serial_number, utxo_set):
-            return{
+            return {
                 "file": f"{file.filename}",
                 "Status": "Not valid from the UTXO"
             }
-        return{
+        return {
             "file": f"{file.filename}",
             "Status": "Valid"
         }

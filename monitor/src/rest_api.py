@@ -279,9 +279,22 @@ def revoke_cert_serial_number(serial_num: str):
     if cert is None:
         return {"status": f"Error: Unable to find certificate from serial number -> {serial_num}"}
 
+    cert_attribs = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)
+    cert_file_name: str = ""
+    if cert_attribs:
+        if isinstance(cert_attribs[0].value, bytes):
+            cert_file_name = cert_attribs[0].value.decode('utf-8').strip()
+        else:
+            cert_file_name = cert_attribs[0].value.strip()
+    else:
+        return {
+            "status": f"Error: No Common Name attached to cerificate id {serial_num}."
+        }
+
     # get the CN part of the
-    cert_file_name = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value.strip()
-    print(f'Revoking certificate with file name -> {cert_file_name}')
+    # cert_file_name = cert.subject.get_attributes_for_oid(OID_COMMON_NAME)[0].value.strip()
+    # print(f'Revoking certificate with file name -> {cert_file_name}')
+    # print(f"Revoking certificate with file name -> {cert_file_name.decode('utf-8') if isinstance(cert_file_name, bytes) else cert_file_name}")
     if certificate_authority.certificate_exists(cert_file_name):
         if not revoke_certificate_impl(cert, utxo_set, finance_srv=config["financing_service"]):
             return {"status": f'Unable to remove certificate from the UTXO {cert_file_name}'}

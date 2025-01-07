@@ -1,17 +1,15 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Union, MutableMapping, Any
 import requests
 from fastapi import UploadFile
 
-from tx_engine.interface.blockchain_interface import *
-from tx_engine.interface.interface_factory import *
 import json
 
 from tx_engine import Tx, TxIn, TxOut
 from tx_engine import Wallet, p2pkh_script, address_to_public_key_hash
 from tx_engine import Script
 from tx_engine.engine.op_codes import OP_DROP
-
+from tx_engine.interface.blockchain_interface import BlockchainInterface
 
 from transaction_cache import tx_cache
 from cryptography import x509
@@ -63,8 +61,8 @@ class UTXOSet:
         return "{" + ", ".join(represented_unspent_dict) + "}"
 
     def set_config(self, config):
-        self.funding_key: Wallet = Wallet(config["funding_key"])
-        self.certificate_key: Wallet = Wallet(config["certificate_key"])
+        self.funding_key = Wallet(config["funding_key"])
+        self.certificate_key = Wallet(config["certificate_key"])
         self.certificate_tx_amount = config["certificate_value"]
         self.default_p2pkh_fee = config["default_p2pkh_fee"]
 
@@ -105,7 +103,7 @@ class UTXOSet:
     def get_tx_out_point(self, txid: str, txindex: int) -> Dict:
         headers = {'content-type': 'application/json'}
         url: str = self.uaas_endpoint + "/tx/utxo_by_outpoint"
-        params = {'hash': txid, 'pos': txindex}
+        params: Dict[str, Union[str, int]] = {'hash': txid, 'pos': txindex}
 
         r = requests.get(url, params=params, headers=headers)
         if r.status_code == 200:
@@ -173,7 +171,7 @@ def calculate_fee(payload_length: int, utxo: UTXOSet) -> int:
 
 
 # Given a file name, create a utxo containing the certificate
-def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_srv: str) -> None:
+def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_srv: MutableMapping[str, Any]) -> None:
 
     with open(cert_file_name, "r") as f:
         cert_buf = f.read()
@@ -242,7 +240,7 @@ def create_certificate_transaction(cert_file_name: str, utxo: UTXOSet, finance_s
     utxo_set.update_unspents(utxo.get_utxo_client())
 
 
-def spend_certificate_transaction(tx_id: str, tx_index: int, cert_key: int, utxo: UTXOSet, finance_srv: str) -> bool:
+def spend_certificate_transaction(tx_id: str, tx_index: int, cert_key: int, utxo: UTXOSet, finance_srv: MutableMapping[str, Any]) -> None:
     """ Given an input tx & index, create a tx that spends the utxo (funded by the funding wallet)
         The transaction caches are updated to reflect certificates being revoked
     """
@@ -324,13 +322,13 @@ def validate_certificate_tx(cert_serial_number: int, utxo_set: UTXOSet) -> bool:
     assert tx_out_dict['scriptPubKey'] is not None
 
     script_str: str = tx_out_dict['scriptPubKey'].script_pubkey.to_string()
-    cert_hex: str = None
+    cert_hex: str = ""
     try:
         target_index = script_str.split().index('OP_DROP')
         if target_index != 0:
             cert_hex = script_str.split()[target_index - 1]
     except ValueError as e:
-        raise RuntimeError(e.what())
+        raise RuntimeError(f'{e}')
 
     cert_info = json.loads(bytes.fromhex(cert_hex[2:]).decode())
     assert cert_info["cert_id"] == cert_serial_number
@@ -346,7 +344,7 @@ def validate_certificate_tx(cert_serial_number: int, utxo_set: UTXOSet) -> bool:
     return True
 
 
-def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_srv: str) -> bool:
+def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_srv: MutableMapping[str, Any]) -> bool:
     try:
         issued_tx_info = tx_cache.lookup_cert_tx(cert.serial_number)
         print(f'revoke_certificate_impl tx info -> {issued_tx_info} ')
@@ -358,7 +356,7 @@ def revoke_certificate_impl(cert: x509.Certificate, utxo_set: UTXOSet, finance_s
     return True
 
 
-def revoke_certifcate_transaction(file: UploadFile, utxo_set: UTXOSet, finance_srv: str) -> bool:
+def revoke_certifcate_transaction(file: UploadFile, utxo_set: UTXOSet, finance_srv: MutableMapping[str, Any]) -> bool:
     """ Given a certificate UpLoadFile, spend the UTXO output returning the amount to the
         funding wallet
     """
@@ -377,14 +375,14 @@ def get_cert_from_utxo(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Certi
 
     script_as_str: str = script_pubkey.to_string()
     split_script = script_as_str.split()
-    cert_hex: str = None
+    cert_hex: str = ""
     try:
         target_index = split_script.index('OP_DROP')
         if target_index == 0:
             raise ValueError('OP_DROP IS AT THE BEGINNING OF THE SCRIPT')
         cert_hex = split_script[target_index - 1]
     except ValueError as e:
-        raise ValueError(e.what())
+        raise ValueError(f'{e}')
 
     cert_decoded = bytes.fromhex(cert_hex[2:]).decode()
     cert_info = json.loads(cert_decoded)
@@ -411,13 +409,13 @@ def get_cert_from_raw_tx(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Cer
     issued_tx = tx_cache.lookup_cert_tx(cert_serial_number)
     tx = load_tx(issued_tx.cert_txid, utxo_set)
     script_str: str = tx.tx_outs[issued_tx.cert_txindex].script_pubkey.to_string()
-    cert_hex: str = None
+    cert_hex: str = ""
     try:
         target_index = script_str.split().index('OP_DROP')
         if target_index != 0:
             cert_hex = script_str.split()[target_index - 1]
     except ValueError as e:
-        raise RuntimeError(e.what())
+        raise RuntimeError(f'{e}')
 
     cert_info = json.loads(bytes.fromhex(cert_hex[2:]).decode())
     cert = x509.load_pem_x509_certificate(cert_info["cert"].encode())
@@ -427,13 +425,13 @@ def get_cert_from_raw_tx(cert_serial_number: int, utxo_set: UTXOSet) -> x509.Cer
 def get_cert_from_tx_id(tx_id: str, tx_index: int, utxo_set: UTXOSet) -> x509.Certificate:
     tx = load_tx(tx_id, utxo_set)
     script_str: str = tx.tx_outs[tx_index].script_pubkey.to_string()
-    cert_hex: str = None
+    cert_hex: str = ""
     try:
         target_index = script_str.split().index('OP_DROP')
         if target_index != 0:
             cert_hex = script_str.split()[target_index - 1]
     except ValueError as e:
-        raise RuntimeError(e.what())
+        raise RuntimeError(f'{e}')
 
     cert_info = json.loads(bytes.fromhex(cert_hex[2:]).decode())
     cert = x509.load_pem_x509_certificate(cert_info["cert"].encode())
