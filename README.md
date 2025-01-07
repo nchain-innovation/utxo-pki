@@ -52,22 +52,9 @@ The following diagram shows how the CA created certificates are used in the HTTP
 
 # Further documentation
 
-* To setup this project see [here](System_setup.md)
-* Tools for the project can be found [here](monitor/src/tools/README.md)
+* To setup this project see [here](docs/System_setup.md)
 * OCSP details [here](docs/OCSP.md)
 * CA details are [here](docs/CA.md)
 * `openssl` commands that maybe useful [here](docs/Openssl.md)
 * Developer tools can be found [here](docs/Developer_tools.md)
 
-# Ideas. (This is a non-exhaustive list of potential things to do)
-* Add merkle tree information for revokes certificates that were revoked before the transaction was mined
-* Use the MerkleProof object to read the serialised string for the gettxproof RPC call (the code is written just not used)
-* Write an RPC interface to verify merkle proofs. 
-* Write a merkle tree validator/merkle proof verifier (for independant merkle tree validation)
-* Issue a private key to the customer of the certificate authority when they create a certificate so the user can revoke (spend) the transaction. This will also require a require aa modification to the locking script containing the certficate (1 of 2 accumulator multisig)
-* Make the certificate subject information configurable (tmol file (with defaults) and text boxes on the UI)
-* Introduce a root certificate
-* Substitue different CAs
-* Add public key informtion (as OIDs) to the certificate (part of the CSR)
-* Add user experience (poncy front end)
-* Extend the testing & test coverage
