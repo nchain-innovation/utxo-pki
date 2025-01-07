@@ -67,11 +67,9 @@ noCheck = ignored
 
 
 # key signing for writing transactions to the chain
-# funding_key pubkey -> n4Z4DvQH2LhoM5UHsk9texQiHj5Rgz6jhD
-# certificate key pubkey -> mzjX58hHfkHLsvTZVpb4m9mVXma9PTxrkH
 [cert_wallets]
-funding_key = "cQgderrMXQn2q6RHQioujBKRrjJRtnkKXXvRrwuBojB5Pj2u9inT"
-certificate_key = "cPyEicHytsXpEWd6yKgwyt9t3Zk1QV169pdvXmizV3S6YAKBwsiv"
+funding_key = ""
+certificate_key = ""
 funding_balance = 200000000
 certificate_value = 1000
 default_p2pkh_fee = 500
